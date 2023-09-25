@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import br.ufpe.cin.giln.ee2.common.*;
 
 public class P1 implements RunnableProblem{
+    @Override
     public boolean run(String[] args){
         int i = 0;
         ArrayList <Integer> departTimes = new ArrayList<>();
