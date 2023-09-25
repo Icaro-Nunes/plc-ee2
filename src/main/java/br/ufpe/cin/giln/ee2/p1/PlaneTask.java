@@ -25,10 +25,15 @@ public class PlaneTask implements Runnable {
             synchronized(monitor){
                 while(!condition){
                     monitor.wait();
+
+                    if(!monitor.acquired(taskTime))
+                        continue;
+
                     if(System.currentTimeMillis() - originTime >= taskTime){
-                        condition = true;
-                        if(monitor.getAvailableTracks() > 0)
+                        if(monitor.getAvailableTracks() > 0){
+                            condition = true;
                             monitor.occupyTrack();
+                        }
                     }
                 }
             }
@@ -38,7 +43,7 @@ public class PlaneTask implements Runnable {
 
             synchronized(monitor){
                 monitor.deoccupyTrack();
-                System.out.println("Avião do horário " + taskTime + " saindo");
+                System.out.println("Avião do horário " + taskTime + " saindo a " + (execStart - originTime));
             }
 
         } catch (InterruptedException e) {

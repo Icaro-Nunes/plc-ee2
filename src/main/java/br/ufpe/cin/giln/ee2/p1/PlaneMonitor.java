@@ -7,12 +7,25 @@ public class PlaneMonitor {
     public int availableTracks = 0;
     private int completedTasks = 0;
 
+    private PriorityQueue<Integer> tasksToExec = new PriorityQueue<>();
+
+    public synchronized boolean acquired(int time){
+        if(tasksToExec.isEmpty())
+            return false;
+
+        if(time == tasksToExec.peek())
+            return true;
+
+        return false;
+    }
+
     public synchronized int getAvailableTracks(){
         return availableTracks;
     }
 
     public synchronized void occupyTrack(){
         availableTracks--;
+        tasksToExec.poll();
     }
 
     public synchronized void deoccupyTrack(){
@@ -37,6 +50,7 @@ public class PlaneMonitor {
                 new PlaneTask(this, startupTime, time)
             );
             taskQueue.add(time);
+            tasksToExec.add(time);
             thread.start();
         }
 
@@ -46,6 +60,7 @@ public class PlaneMonitor {
                 new PlaneTask(this, startupTime, time)
             );
             taskQueue.add(time);
+            tasksToExec.add(time);
             thread.start();
         }
 
@@ -65,6 +80,7 @@ public class PlaneMonitor {
 
             if(System.currentTimeMillis() - startupTime >= smallestTime){
                 taskQueue.poll();
+                taskQueue.add(smallestTime+500);
                 synchronized (this) {
                     notifyAll();
                 }
