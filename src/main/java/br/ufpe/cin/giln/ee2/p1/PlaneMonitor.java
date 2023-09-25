@@ -6,8 +6,9 @@ import java.util.PriorityQueue;
 public class PlaneMonitor {
     public int availableTracks = 0;
     private int completedTasks = 0;
-
+    static final int TOO_CLOSE_MARGIN = 1;
     private PriorityQueue<Integer> tasksToExec = new PriorityQueue<>();
+    PriorityQueue<Integer> taskQueue = new PriorityQueue<>();
 
     public synchronized boolean acquired(int time){
         if(tasksToExec.isEmpty())
@@ -42,8 +43,6 @@ public class PlaneMonitor {
         int necessaryTasks = N+M;
         long startupTime = System.currentTimeMillis();
 
-        PriorityQueue<Integer> taskQueue = new PriorityQueue<>(necessaryTasks);
-        
         for(int i = 0; i < N; i++){
             int time = departTimes.get(i);
             Thread thread = new Thread(
@@ -67,24 +66,34 @@ public class PlaneMonitor {
         while(
             completedTasks < necessaryTasks
         ){
-            if(taskQueue.isEmpty()) {
-                try {
-                    Thread.sleep(600);
+            long waitTime = 0;
+
+            synchronized (this) {
+                if(taskQueue.isEmpty())
                     break;
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-            }
 
-            int smallestTime = taskQueue.peek();
+                int smallestTime = taskQueue.peek();
+                long currTime = System.currentTimeMillis() - startupTime;
 
-            if(System.currentTimeMillis() - startupTime >= smallestTime){
-                taskQueue.poll();
-                taskQueue.add(smallestTime+500);
-                synchronized (this) {
+                if(currTime >= smallestTime){
+                    taskQueue.poll();
+                    taskQueue.add(smallestTime+500+TOO_CLOSE_MARGIN);
                     notifyAll();
                 }
+
+                if(!taskQueue.isEmpty())
+                    smallestTime = taskQueue.peek();
+
+                waitTime = Math.max(0,
+                    smallestTime - currTime
+                );
             }
+
+            try {
+				Thread.sleep(waitTime);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
         }
     }
 }

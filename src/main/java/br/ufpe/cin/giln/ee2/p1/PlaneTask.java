@@ -29,7 +29,8 @@ public class PlaneTask implements Runnable {
                     if(!monitor.acquired(taskTime))
                         continue;
 
-                    if(System.currentTimeMillis() - originTime >= taskTime){
+                    long diff = System.currentTimeMillis() - originTime;
+                    if(diff >= taskTime){
                         if(monitor.getAvailableTracks() > 0){
                             condition = true;
                             monitor.occupyTrack();
@@ -39,11 +40,13 @@ public class PlaneTask implements Runnable {
             }
 
             long execStart = System.currentTimeMillis();
-            while(System.currentTimeMillis() - execStart <= 500);
+            Thread.sleep(500);
+
+            long realFlightTime = (execStart - originTime);
 
             synchronized(monitor){
                 monitor.deoccupyTrack();
-                System.out.println("Avião do horário " + taskTime + " saindo a " + (execStart - originTime));
+                System.out.println("Horario esperado: " + taskTime + "; Horário real : " + realFlightTime + "; Atraso: " + (realFlightTime - taskTime));
             }
 
         } catch (InterruptedException e) {
