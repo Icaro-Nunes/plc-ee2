@@ -21,6 +21,8 @@ public class P2 implements RunnableProblem {
 
             ArrayList<Job> jobs = new ArrayList<>();
 
+            QueenB monitor = new QueenB();
+
             for (; i < N_offset; i++) {
                 line = args[i];
 
@@ -36,6 +38,7 @@ public class P2 implements RunnableProblem {
                     );
 
                 Job job = new Job(
+                        monitor,
                         id,
                         time,
                         dependencies.stream().mapToInt(v -> v).toArray()
@@ -44,6 +47,7 @@ public class P2 implements RunnableProblem {
                 jobs.add(job);
             }
 
+            monitor.run(O, jobs);
 
             return true;
         } catch (IndexOutOfBoundsException e){
