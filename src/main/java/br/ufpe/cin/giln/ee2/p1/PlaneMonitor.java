@@ -3,6 +3,11 @@ package br.ufpe.cin.giln.ee2.p1;
 import java.util.List;
 import java.util.PriorityQueue;
 
+/*
+    This class is the plane monitor, being responsible
+    for notifying all planes whenever there is a track
+    available
+*/
 public class PlaneMonitor {
     public int availableTracks = 0;
     private int completedTasks = 0;
