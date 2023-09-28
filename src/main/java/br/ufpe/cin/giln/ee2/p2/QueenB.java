@@ -9,6 +9,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+/* 
+    This class acts as the job monitor from problem 2,
+    being responsible for enqueuing and submiting jobs
+    whenever there is an available worker, and being 
+    notified whenever a job ends
+*/
 public class QueenB {
     public static final int TOLERANCE = 1;
     public static final int WAIT_TIME = 10;
