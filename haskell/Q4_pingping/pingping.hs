@@ -7,6 +7,7 @@ popFirst :: [a] -> (Maybe a, [a])
 popFirst [] = (Nothing, [])
 popFirst l = (Just $ head l, tail l)
 
+-- generator uses MVar as some kind of state about the previous value
 counterInc :: MVar Int -> IO Int
 counterInc v = do
         val <- takeMVar v
@@ -19,11 +20,13 @@ data PingPing = PingPing {
     completed :: MVar Bool
 }
 
+-- consume function effectively uses the message value
 consume :: Int -> IO ()
 consume i = do
         putStrLn $ "received "++ show i
         return ()
 
+-- enqueues each value
 pingSenderAux :: PingPing -> IO Int -> IO ()
 pingSenderAux game numGen = do
         n <- numGen
@@ -31,6 +34,7 @@ pingSenderAux game numGen = do
         putStrLn $ "put "++ show n ++ " on queue"
         putMVar (queue game) (q++[n])
 
+-- invokes all enqueues and then sends completed signal
 pingSender :: PingPing -> Int -> IO ()
 pingSender game n = do
         counter <- newMVar 0
@@ -39,6 +43,7 @@ pingSender game n = do
         putMVar (completed game) True
 
 
+-- receiver consumes queue at each iteration until queue is empty AND done signal is passed
 pingReceiverLoop :: PingPing -> IO ()
 pingReceiverLoop game = do
         q <- takeMVar (queue game)

@@ -7,6 +7,9 @@ import Data.Semigroup (diff)
 
 type ParkingLot = Map Int Bool
 
+-- MonitorInfo struct is passed with state (MVar)
+-- and helper functions that are generated based
+-- on input
 data MonitorInfo = MonitorInfo {
     isPcdCar :: Int -> Bool,
     isPcdVacancy :: Int -> Bool,
@@ -17,16 +20,21 @@ data MonitorInfo = MonitorInfo {
 unpackMonitor :: MonitorInfo -> (Int -> Bool, Int -> Bool, MVar ParkingLot, UTCTime)
 unpackMonitor monitor = (isPcdCar monitor, isPcdVacancy monitor, parkingLot monitor, originTime monitor)
 
+
+-- generators
 isPcdVacancyGenerator :: Int -> Int -> Bool
 isPcdVacancyGenerator numVac index = index <= (numVac `div` 10)
 
 isPcdCarGenerator :: Int -> Int -> Bool
 isPcdCarGenerator numCars index = index <= (numCars `div` 5)
 
+
 initParkingLot :: ParkingLot -> Int -> ParkingLot
 initParkingLot m 0 = insert 0 False m
 initParkingLot m n = initParkingLot (insert n False m) (n-1)
 
+
+-- operate on parking lot data structure (purely)
 isAvailableVacancy :: Bool -> Bool -> Bool -> Bool
 isAvailableVacancy occupied isPcdCar isPcdVacancy = not occupied && (isPcdCar || not isPcdVacancy)
 
@@ -36,6 +44,10 @@ occupyIfVacant parkingLot isPcdVacancy isPcdCar =
         else (head availableList, insert (head availableList) True parkingLot)
     where availableList = [fst i | i <- toList parkingLot, isAvailableVacancy (snd i) isPcdCar (isPcdVacancy (fst i))]
 
+
+-- each car operates as a thread, sleeping at 
+-- startup until its arrival time, then 
+-- trying to get a vacancy
 carLoop :: MonitorInfo -> Int -> IO ()
 carLoop monitor id = do
     let (isPcdCar, isPcdVacancy, parkingLot, originTime) = unpackMonitor monitor
@@ -67,12 +79,16 @@ initCar monitor gen = do
     threadDelay (startTimeMs * 1000)
     carLoop monitor id
 
+
+-- generate each car's id and start time
 carInfoGenerator :: MVar Int -> IO (Int, Int)
 carInfoGenerator n = do
     index <- takeMVar n
     putMVar n (index+1)
     return (index, index*200)
 
+
+-- init all car threads
 parkingMonitor :: Int -> Int -> IO ()
 parkingMonitor k n = do
     let pl = initParkingLot empty k
